@@ -1,0 +1,61 @@
+TUTORIAL: CÓMO SUBIR TU WEB A RENDER.COM (GRATIS)
+
+Sigue estos pasos detallados para poner tu web de ARK online usando Render:
+
+1. PREPARATIVOS
+---------------
+- Asegúrate de que tu código esté en un repositorio de GITHUB.
+- He corregido el error de 'ModuleNotFoundError' simplificando el Dockerfile. 
+- La aplicación detectará automáticamente el puerto de Render.
+
+2. CREAR CUENTA EN RENDER
+-------------------------
+- Ve a https://render.com/ y crea una cuenta (puedes usar tu cuenta de GitHub para loguearte rápido).
+
+3. CREAR NUEVO SERVICIO
+-----------------------
+- Haz clic en el botón "New +" y selecciona "Web Service".
+- Conecta tu cuenta de GitHub si no lo has hecho.
+- Busca tu repositorio de la web de ARK y haz clic en "Connect".
+
+4. CONFIGURACIÓN DEL SERVICIO
+-----------------------------
+- Name: Ponle un nombre (ej: ark-tribe-manager).
+- Region: Selecciona la más cercana (o deja la por defecto).
+- Branch: main (o la que estés usando).
+- Root Directory: (Deja en blanco si los archivos están en la carpeta principal).
+- Runtime: Selecciona "Docker" (IMPORTANTE: Render usará nuestro Dockerfile automáticamente).
+- Instance Type: Selecciona "Free" ($0/month).
+
+5. CONFIGURAR VARIABLES DE ENTORNO (MUY IMPORTANTE)
+---------------------------------------------------
+Render NO conoce tus claves de Firebase. Debes añadirlas para que la web funcione:
+- Haz clic en la pestaña "Environment" (o durante el proceso de creación busca "Advanced").
+- Añade las siguientes variables (Key y Value):
+
+  Key: FIREBASE_API_KEY          Value: (Tu API Key de Firebase)
+  Key: FIREBASE_AUTH_DOMAIN       Value: fog-astra.firebaseapp.com
+  Key: FIREBASE_DB_URL           Value: https://fog-astra-default-rtdb.firebaseio.com
+  Key: FIREBASE_PROJECT_ID       Value: fog-astra
+  Key: FIREBASE_STORAGE_BUCKET    Value: fog-astra.firebasestorage.app
+  Key: FIREBASE_MESSAGING_ID     Value: 503068814140
+  Key: FIREBASE_APP_ID            Value: 1:503068814140:web:db5ff6833b7dc553144c39
+  Key: DISCORD_WEBHOOK           Value: (Tu URL de Webhook de Discord)
+  Key: ARKSTATUS_API_KEY         Value: (Tu clave de arkstatus.com)
+  Key: ARK_SERVER_ID             Value: 68116671
+
+6. DESPLEGAR
+------------
+- Haz clic en "Create Web Service".
+- Render empezará a construir tu "contenedor". Tarda unos minutos.
+- Verás un log que dice "Build successful" y luego "Live".
+
+7. USAR LA WEB
+--------------
+- Arriba a la izquierda verás la URL de tu sitio (ej: https://ark-manager.onrender.com).
+- ¡Pásala a tus admins y listo!
+
+NOTAS IMPORTANTES:
+- Como es el plan GRATIS, si nadie entra a la web en 15 minutos, Render la "apaga" para ahorrar.
+- Cuando alguien intente entrar tras estar apagada, tardará unos 30-50 segundos en cargar mientras se enciende. Esto es NORMAL en el plan gratuito.
+- He corregido el error de 'components' que viste en Railway cambiando la forma en que se ejecuta la app en el Dockerfile. Ahora es mucho más estable.

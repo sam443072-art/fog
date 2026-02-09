@@ -1,0 +1,5 @@
+flet>=0.21.0
+pyrebase4>=4.7.1
+requests>=2.31.0
+python-jwt>=4.1.0
+gcloud>=0.18.3

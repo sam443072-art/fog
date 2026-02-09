@@ -174,7 +174,7 @@ class GeneratorsView:
         # Barra de progreso
         progress_bar = ft.ProgressBar(
             value=progress,
-            width=300,
+            width=None, # Quitar ancho fijo
             color=COLORS["warning"] if remaining > 0 else COLORS["danger"],
             bgcolor=COLORS["border"],
             height=8,

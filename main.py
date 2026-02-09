@@ -70,6 +70,9 @@ class ARKTribeManager:
             color_scheme_seed=COLORS["accent"],
             font_family="Segoe UI"
         )
+        
+        # Evento de cambio de tamaño
+        self.page.on_resize = self._handle_resize
     
     def _show_login(self):
         """Mostrar vista de login"""
@@ -111,23 +114,86 @@ class ARKTribeManager:
             bgcolor=COLORS["background"]
         )
         
-        # Layout principal
-        main_layout = ft.Row([
-            self.sidebar.build(),
-            self.content_container
-        ], spacing=0, expand=True)
+        # Layout principal (será dinámico)
+        self.main_layout = ft.Container(expand=True)
+        self._update_layout()
         
         self.page.controls.clear()
-        self.page.add(main_layout)
+        self.page.add(self.main_layout)
         self.page.update()
         
         # Cargar datos iniciales
         self._refresh_current_section()
     
+    def _handle_resize(self, e):
+        """Manejar cambio de tamaño de ventana"""
+        if self.sidebar: # Solo si ya estamos dentro de la app
+            self._update_layout()
+            self.page.update()
+
+    def _update_layout(self):
+        """Actualizar el layout basado en el ancho de pantalla"""
+        if not self.sidebar:
+            return
+
+        is_mobile = self.page.width < 800
+        
+        # Reset sidebar build
+        sidebar_content = self.sidebar.build()
+        
+        if is_mobile:
+            # En móvil usamos un Drawer
+            self.page.drawer = ft.NavigationDrawer(
+                controls=[sidebar_content],
+                bgcolor=COLORS["card"]
+            )
+            
+            # Botón de menú (Hamburger)
+            menu_button = ft.IconButton(
+                icon=ft.Icons.MENU,
+                icon_color=COLORS["accent"],
+                on_click=lambda _: self.page.show_drawer(self.page.drawer)
+            )
+            
+            header_mobile = ft.Container(
+                content=ft.Row([
+                    menu_button,
+                    ft.Text("ARK MANAGER", size=18, weight=ft.FontWeight.BOLD, color=COLORS["accent"]),
+                ], alignment=ft.MainAxisAlignment.START),
+                padding=10,
+                bgcolor=COLORS["card"],
+                border=ft.border.only(bottom=ft.BorderSide(1, COLORS["border"]))
+            )
+            
+            # En móvil, el contenedor de contenido NO debe tener expand=True en el sentido vertical
+            # para que el scroll del main_layout funcione bien.
+            self.content_container.expand = False
+            
+            self.main_layout.content = ft.Column([
+                header_mobile,
+                self.content_container
+            ], spacing=0, scroll=ft.ScrollMode.AUTO, expand=True)
+            
+        else:
+            # En desktop, quitamos el drawer
+            self.page.drawer = None
+            self.content_container.expand = True
+            sidebar_content.width = 250
+            
+            self.main_layout.content = ft.Row([
+                sidebar_content,
+                self.content_container
+            ], spacing=0, expand=True)
+    
     def _handle_section_change(self, section: str):
         """Cambiar sección activa"""
         self.current_section = section
         
+        # Cerrar el drawer en móvil si está abierto
+        if self.page.drawer and self.page.drawer.open:
+            self.page.drawer.open = False
+            self.page.update()
+            
         # Actualizar contenido
         if section == "server":
             self.content_container.content = self.server_status_view.build()
@@ -240,9 +306,13 @@ if __name__ == "__main__":
     # Detectar puerto de Railway o usar 8080 por defecto
     port = int(os.environ.get("PORT", 8080))
     
-    # En producción (Railway/Docker), siempre usar modo web y escuchar en 0.0.0.0
-    if os.environ.get("RAILWAY_STATIC_URL") or os.environ.get("PORT"):
-        ft.app(target=main, view=ft.AppView.WEB_BROWSER, port=port, host="0.0.0.0")
+    # En producción (Railway/Render/Docker), usar modo servidor puro (sin intentar abrir navegador local)
+    if os.environ.get("PORT"):
+        print(f"🚀 Iniciando servidor en puerto {port}...")
+        try:
+            ft.app(target=main, port=port, host="0.0.0.0")
+        except Exception as e:
+            print(f"❌ ERROR CRÍTICO AL INICIAR APP: {e}")
     else:
-        # Para desarrollo local (abre una ventana nativa)
+        # Para desarrollo local (ventana nativa)
         ft.app(target=main)

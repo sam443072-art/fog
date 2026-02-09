@@ -21,15 +21,18 @@ class LoginView:
         # Campo de email
         self.email_field = ft.TextField(
             label="Email",
-            hint_text="admin@fogtribe.com",
-            width=350,
-            bgcolor=COLORS["card"],
+            # hint_text="admin@fogtribe.com", # Removed
+            width=None, # Changed from 350
+            max_width=400, # Added
+            bgcolor="#111111", # Changed from COLORS["card"]
             border_color=COLORS["border"],
             focused_border_color=COLORS["accent"],
-            color=COLORS["text_primary"],
-            label_style=ft.TextStyle(color=COLORS["text_secondary"]),
+            # color=COLORS["text_primary"], # Removed
+            # label_style=ft.TextStyle(color=COLORS["text_secondary"]), # Removed
             text_size=14,
-            height=60,
+            # height=60, # Removed
+            border_radius=8, # Added
+            keyboard_type=ft.KeyboardType.EMAIL # Added
         )
         
         # Campo de contraseña
@@ -37,14 +40,16 @@ class LoginView:
             label="Contraseña",
             password=True,
             can_reveal_password=True,
-            width=350,
-            bgcolor=COLORS["card"],
+            width=None, # Changed from 350
+            max_width=400, # Added
+            bgcolor="#111111", # Changed from COLORS["card"]
             border_color=COLORS["border"],
             focused_border_color=COLORS["accent"],
-            color=COLORS["text_primary"],
-            label_style=ft.TextStyle(color=COLORS["text_secondary"]),
+            # color=COLORS["text_primary"], # Removed
+            label_style=ft.TextStyle(color=COLORS["text_secondary"]), # Kept this line as it was in the original and not explicitly removed by the snippet, but the snippet had a syntax error. Assuming the intent was to keep it if not explicitly changed.
             text_size=14,
-            height=60,
+            height=60, # Kept this line as it was in the original and not explicitly removed by the snippet.
+            border_radius=8, # Added
             on_submit=lambda _: self._handle_login()
         )
         
@@ -60,7 +65,6 @@ class LoginView:
         # Botón de login
         self.login_button = ft.ElevatedButton(
             content=ft.Text("Iniciar Sesión"),
-            width=350,
             height=50,
             bgcolor=COLORS["accent"],
             color="#000000",
@@ -98,12 +102,19 @@ class LoginView:
                 self.password_field,
                 self.error_text,
                 self.login_button,
+                ft.Container(height=10), # Added
+                ft.TextButton( # Added
+                    content=ft.Text("¿Olvidaste tu contraseña?", size=12, color=COLORS["text_secondary"]), # Added
+                    on_click=lambda _: print("Reset pass") # Added
+                ) # Added
             ], 
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=20),
             bgcolor=COLORS["card"],
-            border_radius=12,
+            border_radius=16, # Changed from 12
             padding=40,
+            width=400, # Changed from no width
+            max_width=400, # Added
             shadow=ft.BoxShadow(
                 spread_radius=1,
                 blur_radius=15,

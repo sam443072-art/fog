@@ -32,44 +32,41 @@ class MembersView:
         
         # Formulario para añadir miembro
         self.name_field = ft.TextField(
-            label="Nombre",
-            hint_text="PlayerName",
-            width=200,
+            label="Nombre Ark",
             bgcolor=COLORS["card"],
             border_color=COLORS["border"],
             focused_border_color=COLORS["accent"],
             color=COLORS["text_primary"],
             label_style=ft.TextStyle(color=COLORS["text_secondary"]),
-            text_size=14
+            text_size=14,
+            expand=True
         )
         
         self.discord_field = ft.TextField(
-            label="Discord",
-            hint_text="user#1234",
-            width=200,
+            label="Usuario Discord",
             bgcolor=COLORS["card"],
             border_color=COLORS["border"],
             focused_border_color=COLORS["accent"],
             color=COLORS["text_primary"],
             label_style=ft.TextStyle(color=COLORS["text_secondary"]),
-            text_size=14
+            text_size=14,
+            expand=True
         )
         
         self.vouch_field = ft.TextField(
             label="Vouch",
             hint_text="Quien lo trajo",
-            width=200,
             bgcolor=COLORS["card"],
             border_color=COLORS["border"],
             focused_border_color=COLORS["accent"],
             color=COLORS["text_primary"],
             label_style=ft.TextStyle(color=COLORS["text_secondary"]),
-            text_size=14
+            text_size=14,
+            expand=True
         )
         
         self.trust_dropdown = ft.Dropdown(
             label="Nivel de Confianza",
-            width=180,
             bgcolor=COLORS["card"],
             border_color=COLORS["border"],
             focused_border_color=COLORS["accent"],
@@ -100,9 +97,8 @@ class MembersView:
                     self.role_checkboxes["builder"],
                     self.role_checkboxes["GH"],
                     self.role_checkboxes["BR"],
-                ], spacing=10)
+                ], spacing=10, wrap=True)
             ], spacing=5),
-            width=400
         )
         
         add_button = ft.ElevatedButton(

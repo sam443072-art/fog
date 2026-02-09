@@ -79,20 +79,13 @@ class ServerStatusView:
             ], spacing=10)
         )
         
-        # Ping
-        self.ping_text = ft.Text("-", size=24, weight=ft.FontWeight.BOLD, color=COLORS["accent"])
-        ping_card = self._create_stat_card("Ping", self.ping_text)
-        
-        # Versión
-        self.version_text = ft.Text("-", size=16, color=COLORS["text_primary"])
-        version_card = self._create_stat_card("Versión", self.version_text)
-        
-        # Grid de stats principales
-        stats_grid = ft.Row([
-            players_card,
-            ping_card,
-            version_card
-        ], spacing=15, wrap=True)
+        # Grid de estadísticas (Responsivo)
+        stats_grid = ft.ResponsiveRow([
+            self._create_stat_card("Players Online", self.players_text, 6),
+            self._create_stat_card("Server Rank", self.rank_text, 6),
+            self._create_stat_card("Ping", self.ping_text, 6),
+            self._create_stat_card("Version", self.version_text, 6),
+        ], spacing=20)
         
         # Stats adicionales
         self.uptime_text = ft.Text("-", size=14, color=COLORS["text_primary"])
@@ -124,7 +117,7 @@ class ServerStatusView:
             padding=30
         )
     
-    def _create_stat_card(self, title: str, content) -> ft.Container:
+    def _create_stat_card(self, title: str, content, col: int = 3) -> ft.Container:
         """Crear tarjeta de estadística"""
         return ft.Container(
             content=ft.Column([
@@ -135,7 +128,7 @@ class ServerStatusView:
             bgcolor=COLORS["card"],
             border_radius=12,
             border=ft.border.all(1, COLORS["border"]),
-            width=200
+            col={"sm": 6, "md": col}
         )
     
     def _create_info_row(self, label: str, value_widget) -> ft.Row:

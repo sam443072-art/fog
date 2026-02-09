@@ -111,7 +111,6 @@ class Sidebar:
                 admins_section,
                 logout_button
             ], spacing=0),
-            width=250,
             bgcolor=COLORS["card"],
             border=ft.border.only(right=ft.BorderSide(1, COLORS["border"]))
         )

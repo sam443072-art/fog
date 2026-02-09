@@ -15,6 +15,7 @@ class ServerStatusView:
         self.map_text = None
         self.players_text = None
         self.players_progress = None
+        self.rank_text = None
         self.ping_text = None
         self.version_text = None
         self.uptime_text = None
@@ -60,24 +61,11 @@ class ServerStatusView:
             border=ft.border.all(1, COLORS["border"])
         )
         
-        # Jugadores con barra de progreso
-        self.players_text = ft.Text("0 / 70", size=16, color=COLORS["text_primary"])
-        self.players_progress = ft.ProgressBar(
-            value=0,
-            width=300,
-            color=COLORS["accent"],
-            bgcolor=COLORS["border"],
-            height=8,
-            border_radius=4
-        )
-        
-        players_card = self._create_stat_card(
-            "Jugadores",
-            ft.Column([
-                self.players_text,
-                self.players_progress
-            ], spacing=10)
-        )
+        # Estadísticas principales
+        self.players_text = ft.Text("0", size=24, weight=ft.FontWeight.BOLD, color=COLORS["accent"])
+        self.rank_text = ft.Text("-", size=24, weight=ft.FontWeight.BOLD, color=COLORS["accent"])
+        self.ping_text = ft.Text("-", size=24, weight=ft.FontWeight.BOLD, color=COLORS["accent"])
+        self.version_text = ft.Text("-", size=14, weight=ft.FontWeight.BOLD, color=COLORS["accent"])
         
         # Grid de estadísticas (Responsivo)
         stats_grid = ft.ResponsiveRow([

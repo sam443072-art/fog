@@ -41,6 +41,10 @@ class ARKTribeManager:
         self.tasks_view = None
         self.members_view = None
         
+        # Contenedores principales
+        self.main_layout = None
+        self.content_container = None
+        
         # Estado
         self.current_section = "server"
         self.current_roles = []

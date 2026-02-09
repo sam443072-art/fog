@@ -1,5 +1,5 @@
 # components/generators_view.py
-# Vista de gestión de generadores con countdown
+# Vista de gestión de generadores con temporizadores
 
 import flet as ft
 from config import COLORS
@@ -8,50 +8,50 @@ from typing import Dict, Any
 
 
 class GeneratorsView:
-    """Vista de generadores con cuenta regresiva en tiempo real"""
+    """Vista de gestión de generadores de la tribu"""
     
     def __init__(self, firebase_manager):
         self.firebase = firebase_manager
-        self.generators_container = None
-        self.name_field = None
-        self.duration_field = None
         self.page = None
-    
-    def build(self) -> ft.Container:
-        """Construir vista de generadores"""
         
-        # Header
-        header = ft.Text(
-            "Generadores",
-            size=28,
-            weight=ft.FontWeight.BOLD,
-            color=COLORS["text_primary"]
-        )
-        
-        # Formulario para añadir generador
+        # Inicializar controles en __init__
         self.name_field = ft.TextField(
             label="Nombre del Generador",
             hint_text="Gen Principal",
-            width=250,
-            bgcolor=COLORS["card"],
-            border_color=COLORS["border"],
-            focused_border_color=COLORS["accent"],
-            color=COLORS["text_primary"],
-            label_style=ft.TextStyle(color=COLORS["text_secondary"]),
-            text_size=14
-        )
-        
-        self.duration_field = ft.TextField(
-            label="Duración (días)",
-            hint_text="7",
-            width=150,
             bgcolor=COLORS["card"],
             border_color=COLORS["border"],
             focused_border_color=COLORS["accent"],
             color=COLORS["text_primary"],
             label_style=ft.TextStyle(color=COLORS["text_secondary"]),
             text_size=14,
-            keyboard_type=ft.KeyboardType.NUMBER
+            expand=True
+        )
+        
+        self.duration_field = ft.TextField(
+            label="Duración (días)",
+            hint_text="7",
+            bgcolor=COLORS["card"],
+            border_color=COLORS["border"],
+            focused_border_color=COLORS["accent"],
+            color=COLORS["text_primary"],
+            label_style=ft.TextStyle(color=COLORS["text_secondary"]),
+            text_size=14,
+            keyboard_type=ft.KeyboardType.NUMBER,
+            expand=True
+        )
+        
+        self.generators_container = ft.Column([], spacing=10)
+        self.error_text = ft.Text("", color=COLORS["danger"], size=12)
+
+    def build(self) -> ft.Container:
+        """Construir vista de generadores"""
+        
+        # Header
+        header = ft.Text(
+            "Generadores de la Tribu",
+            size=28,
+            weight=ft.FontWeight.BOLD,
+            color=COLORS["text_primary"]
         )
         
         add_button = ft.ElevatedButton(
@@ -63,19 +63,19 @@ class GeneratorsView:
         )
         
         add_form = ft.Container(
-            content=ft.Row([
-                self.name_field,
-                self.duration_field,
+            content=ft.Column([
+                ft.Row([
+                    self.name_field,
+                    self.duration_field,
+                ], spacing=15, wrap=True),
+                self.error_text,
                 add_button
-            ], spacing=15, wrap=True),
+            ], spacing=15),
             padding=20,
             bgcolor=COLORS["card"],
             border_radius=12,
             border=ft.border.all(1, COLORS["border"])
         )
-        
-        # Contenedor de generadores
-        self.generators_container = ft.Column([], spacing=10)
         
         generators_list = ft.Container(
             content=ft.Column([
@@ -105,15 +105,21 @@ class GeneratorsView:
     
     def _add_generator(self):
         """Añadir nuevo generador"""
+        self.error_text.value = ""
+        
         name = self.name_field.value
         duration_str = self.duration_field.value
         
         if not name or not duration_str:
+            self.error_text.value = "Completa nombre y duración."
+            if self.page: self.page.update()
             return
-        
+            
         try:
             duration_days = int(duration_str)
             if duration_days <= 0:
+                self.error_text.value = "La duración debe ser mayor a 0."
+                if self.page: self.page.update()
                 return
             
             success = self.firebase.add_generator(name, duration_days)
@@ -124,7 +130,8 @@ class GeneratorsView:
                     self.page.update()
                 self.refresh_generators(self.page)
         except ValueError:
-            pass
+            self.error_text.value = "Ingresa un número válido de días."
+            if self.page: self.page.update()
     
     def refresh_generators(self, page=None):
         """Actualizar lista de generadores"""
@@ -174,7 +181,7 @@ class GeneratorsView:
         # Barra de progreso
         progress_bar = ft.ProgressBar(
             value=progress,
-            width=None, # Quitar ancho fijo
+            width=None,
             color=COLORS["warning"] if remaining > 0 else COLORS["danger"],
             bgcolor=COLORS["border"],
             height=8,

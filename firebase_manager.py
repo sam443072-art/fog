@@ -132,7 +132,7 @@ class FirebaseManager:
                 "name": name,
                 "discord": discord,
                 "vouch": vouch,
-                "trust": trust,
+                "trust_level": trust,
                 "roles": roles
             }
             self.db.child("members").push(member_data, self.id_token)

@@ -1,24 +1,19 @@
 # components/login_view.py
-# Vista de autenticación
+# Vista de inicio de sesión de la aplicación
 
 import flet as ft
 from config import COLORS
 
 
 class LoginView:
-    """Vista de login elegante con diseño premium"""
+    """Vista de login para autenticar usuarios con Firebase"""
     
-    def __init__(self, on_login_success):
+    def __init__(self, firebase_manager, on_login_success):
+        self.firebase = firebase_manager
         self.on_login_success = on_login_success
-        self.email_field = None
-        self.password_field = None
-        self.error_text = None
-        self.login_button = None
-    
-    def build(self) -> ft.Container:
-        """Construir vista de login"""
+        self.page = None
         
-        # Campo de email
+        # Inicializar todos los controles en __init__
         self.email_field = ft.TextField(
             label="Email",
             bgcolor="#111111",
@@ -26,10 +21,10 @@ class LoginView:
             focused_border_color=COLORS["accent"],
             text_size=14,
             border_radius=8,
-            keyboard_type=ft.KeyboardType.EMAIL
+            keyboard_type=ft.KeyboardType.EMAIL,
+            on_submit=lambda _: self.password_field.focus()
         )
         
-        # Campo de contraseña
         self.password_field = ft.TextField(
             label="Contraseña",
             password=True,
@@ -43,18 +38,16 @@ class LoginView:
             on_submit=lambda _: self._handle_login()
         )
         
-        # Texto de error
         self.error_text = ft.Text(
             "",
             color=COLORS["danger"],
             size=12,
-            visible=False,
+            weight=ft.FontWeight.BOLD,
             text_align=ft.TextAlign.CENTER
         )
         
-        # Botón de login
         self.login_button = ft.ElevatedButton(
-            content=ft.Text("Iniciar Sesión"),
+            content=ft.Text("Iniciar Sesión", size=16, weight=ft.FontWeight.BOLD),
             height=50,
             bgcolor=COLORS["accent"],
             color="#000000",
@@ -63,6 +56,16 @@ class LoginView:
             ),
             on_click=lambda _: self._handle_login()
         )
+        
+        self.loading_indicator = ft.ProgressRing(
+            visible=False, 
+            width=24, 
+            height=24, 
+            color=COLORS["accent"]
+        )
+
+    def build(self) -> ft.Container:
+        """Construir la interfaz de login"""
         
         # Logo/Título
         title = ft.Container(
@@ -91,19 +94,17 @@ class LoginView:
                 self.email_field,
                 self.password_field,
                 self.error_text,
-                self.login_button,
-                ft.Container(height=10), # Added
-                ft.TextButton( # Added
-                    content=ft.Text("¿Olvidaste tu contraseña?", size=12, color=COLORS["text_secondary"]), # Added
-                    on_click=lambda _: print("Reset pass") # Added
-                ) # Added
-            ], 
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=20),
-            bgcolor=COLORS["card"],
-            border_radius=16, # Changed from 12
+                ft.Row([self.login_button, self.loading_indicator], alignment=ft.MainAxisAlignment.CENTER),
+                ft.Container(height=10),
+                ft.TextButton(
+                    content=ft.Text("¿Olvidaste tu contraseña?", size=12, color=COLORS["text_secondary"]),
+                    on_click=lambda _: self._show_demo_info()
+                )
+            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=20),
             padding=40,
-            width=400, # Changed from no width
+            bgcolor=COLORS["card"],
+            border_radius=16,
+            width=400,
             shadow=ft.BoxShadow(
                 spread_radius=1,
                 blur_radius=15,
@@ -112,55 +113,45 @@ class LoginView:
             )
         )
         
-        # Contenedor principal centrado
+        # Contenedor principal para centrar
         return ft.Container(
             content=ft.Column([
                 form_container
-            ], 
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            alignment=ft.MainAxisAlignment.CENTER),
-            bgcolor=COLORS["background"],
+            ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
             expand=True,
-            alignment=ft.Alignment(0, 0)
+            bgcolor=COLORS["background"]
         )
     
     def _handle_login(self):
-        """Manejar intento de login"""
+        """Procesar el intento de inicio de sesión"""
         email = self.email_field.value
         password = self.password_field.value
         
-        # Validación básica
         if not email or not password:
-            self._show_error("Por favor completa todos los campos")
+            self.error_text.value = "Por favor ingresa email y contraseña."
+            self.error_text.update()
             return
-        
-        # Deshabilitar botón durante login
+            
+        # Mostrar loading
         self.login_button.disabled = True
-        self.login_button.content.value = "Iniciando sesión..."
-        self.login_button.update()
+        self.loading_indicator.visible = True
+        self.error_text.value = ""
+        self.email_field.update()
+        self.password_field.update()
+        if self.page: self.page.update()
         
-        # Llamar callback de login
-        self.on_login_success(email, password)
-    
-    def _show_error(self, message: str):
-        """Mostrar mensaje de error"""
-        self.error_text.value = message
-        self.error_text.visible = True
-        self.error_text.update()
+        # Intentar login
+        user = self.firebase.login(email, password)
         
-        # Re-habilitar botón
-        if self.login_button:
+        if user:
+            self.on_login_success(email)
+        else:
+            self.error_text.value = "Credenciales incorrectas o error de conexión."
             self.login_button.disabled = False
-            self.login_button.content.value = "Iniciar Sesión"
-            self.login_button.update()
-    
-    def show_error(self, message: str):
-        """Método público para mostrar errores"""
-        self._show_error(message)
-    
-    def reset(self):
-        """Resetear formulario"""
-        if self.login_button:
-            self.login_button.disabled = False
-            self.login_button.content.value = "Iniciar Sesión"
-            self.login_button.update()
+            self.loading_indicator.visible = False
+            if self.page: self.page.update()
+
+    def _show_demo_info(self):
+        """Mostrar información de ayuda"""
+        self.error_text.value = "Contacta al administrador para recuperar tu cuenta."
+        if self.page: self.page.update()

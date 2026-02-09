@@ -15,10 +15,17 @@ class Sidebar:
         self.username = username
         self.current_section = "server"
         self.selected_roles = []
-        self.active_admins_container = None
-        self.role_checkboxes = {}
         self.page = None
-    
+        
+        # Inicializar controles en __init__
+        self.active_admins_container = ft.Column([], spacing=8)
+        self.role_checkboxes = {
+            "ADMIN": self._create_role_checkbox("ADMIN"),
+            "builder": self._create_role_checkbox("builder"),
+            "GH": self._create_role_checkbox("GH"),
+            "BR": self._create_role_checkbox("BR"),
+        }
+        
     def build(self) -> ft.Container:
         """Construir sidebar"""
         
@@ -58,12 +65,7 @@ class Sidebar:
                     weight=ft.FontWeight.BOLD,
                     color=COLORS["text_secondary"]
                 ),
-                ft.Column([
-                    self._create_role_checkbox("ADMIN"),
-                    self._create_role_checkbox("builder"),
-                    self._create_role_checkbox("GH"),
-                    self._create_role_checkbox("BR"),
-                ], spacing=8)
+                ft.Column(list(self.role_checkboxes.values()), spacing=8)
             ], spacing=10),
             padding=20,
             border=ft.border.only(
@@ -73,8 +75,6 @@ class Sidebar:
         )
         
         # Admins activos
-        self.active_admins_container = ft.Column([], spacing=8)
-        
         admins_section = ft.Container(
             content=ft.Column([
                 ft.Text(
@@ -146,7 +146,7 @@ class Sidebar:
         """Crear checkbox de rol"""
         role_info = ROLE_TAGS.get(role, {"color": COLORS["text_secondary"], "label": role})
         
-        checkbox = ft.Checkbox(
+        return ft.Checkbox(
             label=role_info["label"],
             value=False,
             fill_color=role_info["color"],
@@ -154,9 +154,6 @@ class Sidebar:
             label_style=ft.TextStyle(color=COLORS["text_primary"], size=13),
             on_change=lambda _: self._handle_roles_change()
         )
-        
-        self.role_checkboxes[role] = checkbox
-        return checkbox
     
     def _handle_section_change(self, section: str):
         """Cambiar sección activa"""
@@ -176,44 +173,48 @@ class Sidebar:
         if page:
             self.page = page
             
-        self.active_admins_container.controls.clear()
-        
-        if not admins:
-            self.active_admins_container.controls.append(
-                ft.Text("Ninguno", size=12, color=COLORS["text_secondary"])
-            )
-        else:
-            for admin_id, admin_data in admins.items():
-                is_active = admin_data.get("active", False)
-                roles = admin_data.get("roles", [])
-                
-                # Crear badges de roles
-                role_badges = []
-                for role in roles:
-                    role_info = ROLE_TAGS.get(role, {"color": COLORS["text_secondary"], "label": role})
-                    role_badges.append(
-                        ft.Container(
-                            content=ft.Text(role_info["label"], size=9, color="#000000"),
-                            bgcolor=role_info["color"],
-                            padding=ft.padding.symmetric(horizontal=6, vertical=2),
-                            border_radius=4
+        if self.active_admins_container:
+            self.active_admins_container.controls.clear()
+            
+            if not admins:
+                self.active_admins_container.controls.append(
+                    ft.Text("Ninguno", size=12, color=COLORS["text_secondary"])
+                )
+            else:
+                for admin_id, admin_data in admins.items():
+                    is_active = admin_data.get("active", False)
+                    roles = admin_data.get("roles", [])
+                    
+                    # Crear badges de roles
+                    role_badges = []
+                    for role in roles:
+                        role_info = ROLE_TAGS.get(role, {"color": COLORS["text_secondary"], "label": role})
+                        role_badges.append(
+                            ft.Container(
+                                content=ft.Text(role_info["label"], size=9, color="#000000"),
+                                bgcolor=role_info["color"],
+                                padding=ft.padding.symmetric(horizontal=6, vertical=2),
+                                border_radius=4
+                            )
                         )
-                    )
-                
-                admin_item = ft.Row([
-                    ft.Container(
-                        width=8,
-                        height=8,
-                        bgcolor=COLORS["success"] if is_active else COLORS["text_secondary"],
-                        border_radius=4
-                    ),
-                    ft.Column([
-                        ft.Text(admin_id, size=12, color=COLORS["text_primary"]),
-                        ft.Row(role_badges, spacing=4) if role_badges else ft.Container()
-                    ], spacing=4, expand=True)
-                ], spacing=8)
-                
-                self.active_admins_container.controls.append(admin_item)
-        
-        if self.page:
-            self.page.update()
+                    
+                    admin_item = ft.Row([
+                        ft.Container(
+                            width=8,
+                            height=8,
+                            bgcolor=COLORS["success"] if is_active else COLORS["text_secondary"],
+                            border_radius=4
+                        ),
+                        ft.Column([
+                            ft.Text(admin_id, size=12, color=COLORS["text_primary"]),
+                            ft.Row(role_badges, spacing=4) if role_badges else ft.Container()
+                        ], spacing=4, expand=True)
+                    ], spacing=8)
+                    
+                    self.active_admins_container.controls.append(admin_item)
+            
+            if self.page:
+                try:
+                    self.page.update()
+                except:
+                    pass

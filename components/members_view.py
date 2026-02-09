@@ -11,26 +11,9 @@ class MembersView:
     
     def __init__(self, firebase_manager):
         self.firebase = firebase_manager
-        self.members_container = None
-        self.name_field = None
-        self.discord_field = None
-        self.vouch_field = None
-        self.trust_dropdown = None
-        self.role_checkboxes = {}
         self.page = None
-    
-    def build(self) -> ft.Container:
-        """Construir vista de miembros"""
         
-        # Header
-        header = ft.Text(
-            "Miembros de la Tribu",
-            size=28,
-            weight=ft.FontWeight.BOLD,
-            color=COLORS["text_primary"]
-        )
-        
-        # Formulario para añadir miembro
+        # Inicializar todos los controles en __init__ para asegurar que existan
         self.name_field = ft.TextField(
             label="Nombre Ark",
             bgcolor=COLORS["card"],
@@ -89,6 +72,20 @@ class MembersView:
             "BR": ft.Checkbox(label="BR", value=False, fill_color=ROLE_TAGS["BR"]["color"]),
         }
         
+        self.members_container = ft.Column([], spacing=10)
+        self.error_text = ft.Text("", color=COLORS["danger"], size=12)
+
+    def build(self) -> ft.Container:
+        """Construir vista de miembros"""
+        
+        # Header
+        header = ft.Text(
+            "Miembros de la Tribu",
+            size=28,
+            weight=ft.FontWeight.BOLD,
+            color=COLORS["text_primary"]
+        )
+        
         roles_section = ft.Container(
             content=ft.Column([
                 ft.Text("Roles", size=12, color=COLORS["text_secondary"]),
@@ -118,6 +115,7 @@ class MembersView:
                     self.trust_dropdown
                 ], spacing=15, wrap=True),
                 roles_section,
+                self.error_text,
                 add_button
             ], spacing=15),
             padding=20,
@@ -125,9 +123,6 @@ class MembersView:
             border_radius=12,
             border=ft.border.all(1, COLORS["border"])
         )
-        
-        # Contenedor de miembros
-        self.members_container = ft.Column([], spacing=10)
         
         members_list = ft.Container(
             content=ft.Column([
@@ -157,12 +152,17 @@ class MembersView:
     
     def _add_member(self):
         """Añadir nuevo miembro"""
+        # Limpiar error anterior
+        self.error_text.value = ""
+        
         name = self.name_field.value
         discord = self.discord_field.value
         vouch = self.vouch_field.value
         trust = self.trust_dropdown.value
         
         if not name or not discord or not vouch:
+            self.error_text.value = "Por favor completa los campos Nombre, Discord y Vouch."
+            if self.page: self.page.update()
             return
         
         # Obtener roles seleccionados
@@ -179,8 +179,10 @@ class MembersView:
             
             if self.page:
                 self.page.update()
-            
             self.refresh_members(self.page)
+        else:
+            self.error_text.value = "Error al conectar con la base de datos."
+            if self.page: self.page.update()
     
     def refresh_members(self, page=None):
         """Actualizar lista de miembros"""
@@ -206,26 +208,18 @@ class MembersView:
     def _create_member_card(self, member_id: str, member_data: Dict[str, Any]) -> ft.Container:
         """Crear tarjeta de miembro"""
         name = member_data.get("name", "Unknown")
-        discord = member_data.get("discord", "N/A")
-        vouch = member_data.get("vouch", "N/A")
-        trust = member_data.get("trust", "medium")
+        discord = member_data.get("discord", "-")
         roles = member_data.get("roles", [])
+        trust = member_data.get("trust_level", "medium")
+        vouch = member_data.get("vouch", "None")
         
-        # Color de confianza
+        # Color según confianza
         trust_colors = {
-            "high": COLORS["trust_high"],
-            "medium": COLORS["trust_medium"],
-            "low": COLORS["trust_low"]
+            "high": COLORS["success"],
+            "medium": COLORS["warning"],
+            "low": COLORS["danger"]
         }
-        trust_color = trust_colors.get(trust, COLORS["trust_medium"])
-        
-        # Indicador de confianza
-        trust_indicator = ft.Container(
-            width=8,
-            height=60,
-            bgcolor=trust_color,
-            border_radius=ft.border_radius.only(top_left=8, bottom_left=8)
-        )
+        trust_color = trust_colors.get(trust, COLORS["text_secondary"])
         
         # Badges de roles
         role_badges = []
@@ -233,31 +227,29 @@ class MembersView:
             role_info = ROLE_TAGS.get(role, {"color": COLORS["text_secondary"], "label": role})
             role_badges.append(
                 ft.Container(
-                    content=ft.Text(role_info["label"], size=10, color="#000000"),
+                    content=ft.Text(role_info["label"], size=10, color="#000000", weight=ft.FontWeight.BOLD),
                     bgcolor=role_info["color"],
-                    padding=ft.padding.symmetric(horizontal=8, vertical=4),
+                    padding=ft.padding.symmetric(horizontal=8, vertical=2),
                     border_radius=4
                 )
             )
         
-        # Botón de eliminar
-        delete_button = ft.IconButton(
-            icon=ft.Icons.DELETE_OUTLINE,
-            icon_color=COLORS["danger"],
-            tooltip="Eliminar miembro",
-            on_click=lambda _, mid=member_id: self._delete_member(mid)
-        )
-        
         return ft.Container(
             content=ft.Row([
-                trust_indicator,
+                ft.Container(width=5, bgcolor=trust_color, border_radius=2), # Barra lateral de confianza
                 ft.Column([
-                    ft.Text(name, size=16, weight=ft.FontWeight.BOLD, color=COLORS["text_primary"]),
-                    ft.Text(f"Discord: {discord}", size=12, color=COLORS["text_secondary"]),
-                    ft.Text(f"Vouch: {vouch}", size=12, color=COLORS["text_secondary"]),
+                    ft.Row([
+                        ft.Text(name, size=16, weight=ft.FontWeight.BOLD, color=COLORS["text_primary"]),
+                        ft.Text(f"(@{discord})", size=12, color=COLORS["text_secondary"]),
+                    ], spacing=10),
+                    ft.Text(f"Vouch: {vouch}", size=11, color=COLORS["text_secondary"]),
                     ft.Row(role_badges, spacing=5) if role_badges else ft.Container()
                 ], spacing=5, expand=True),
-                delete_button
+                ft.IconButton(
+                    icon=ft.Icons.DELETE_OUTLINE,
+                    icon_color=COLORS["danger"],
+                    on_click=lambda _, mid=member_id: self._delete_member(mid)
+                )
             ], spacing=15),
             padding=15,
             bgcolor=COLORS["card_hover"],
@@ -266,6 +258,6 @@ class MembersView:
         )
     
     def _delete_member(self, member_id: str):
-        """Eliminar miembro"""
+        """Eliminar un miembro"""
         self.firebase.delete_member(member_id)
         self.refresh_members(self.page)

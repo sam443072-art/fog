@@ -11,27 +11,12 @@ class TasksView:
     
     def __init__(self, firebase_manager):
         self.firebase = firebase_manager
-        self.tasks_container = None
-        self.task_field = None
-        self.tag_dropdown = None
         self.page = None
-    
-    def build(self) -> ft.Container:
-        """Construir vista de tareas"""
         
-        # Header
-        header = ft.Text(
-            "Tareas de la Tribu",
-            size=28,
-            weight=ft.FontWeight.BOLD,
-            color=COLORS["text_primary"]
-        )
-        
-        # Formulario para añadir tarea
-        self.task_field = ft.TextField(
+        # Inicializar controles en __init__
+        self.task_control = ft.TextField(
             label="Nueva Tarea",
             hint_text="Farmear metal en la montaña norte",
-            width=400,
             bgcolor=COLORS["card"],
             border_color=COLORS["border"],
             focused_border_color=COLORS["accent"],
@@ -40,12 +25,12 @@ class TasksView:
             text_size=14,
             multiline=True,
             min_lines=1,
-            max_lines=3
+            max_lines=3,
+            expand=True
         )
         
         self.tag_dropdown = ft.Dropdown(
             label="Tag",
-            width=150,
             bgcolor=COLORS["card"],
             border_color=COLORS["border"],
             focused_border_color=COLORS["accent"],
@@ -58,7 +43,21 @@ class TasksView:
                 ft.dropdown.Option("GH", "Greenhouse"),
                 ft.dropdown.Option("BR", "Breeder"),
             ],
-            value="ADMIN"
+            width=200
+        )
+        
+        self.tasks_container = ft.Column([], spacing=10)
+        self.error_text = ft.Text("", color=COLORS["danger"], size=12)
+
+    def build(self) -> ft.Container:
+        """Construir vista de tareas"""
+        
+        # Header
+        header = ft.Text(
+            "Tareas de la Tribu",
+            size=28,
+            weight=ft.FontWeight.BOLD,
+            color=COLORS["text_primary"]
         )
         
         add_button = ft.ElevatedButton(
@@ -70,19 +69,19 @@ class TasksView:
         )
         
         add_form = ft.Container(
-            content=ft.Row([
-                self.task_field,
-                self.tag_dropdown,
+            content=ft.Column([
+                ft.Row([
+                    self.task_control,
+                    self.tag_dropdown,
+                ], spacing=15, vertical_alignment=ft.CrossAxisAlignment.START, wrap=True),
+                self.error_text,
                 add_button
-            ], spacing=15, wrap=True),
+            ], spacing=15),
             padding=20,
             bgcolor=COLORS["card"],
             border_radius=12,
             border=ft.border.all(1, COLORS["border"])
         )
-        
-        # Contenedor de tareas
-        self.tasks_container = ft.Column([], spacing=10)
         
         tasks_list = ft.Container(
             content=ft.Column([
@@ -112,15 +111,25 @@ class TasksView:
     
     def _add_task(self):
         """Añadir nueva tarea"""
-        text = self.task_field.value
+        self.error_text.value = ""
+        
+        text = self.task_control.value
         tag = self.tag_dropdown.value
         
-        if not text or not tag:
+        if not text:
+            self.error_text.value = "Escribe una descripción."
+            if self.page: self.page.update()
+            return
+        
+        if not tag:
+            self.error_text.value = "Selecciona un Tag."
+            if self.page: self.page.update()
             return
         
         success = self.firebase.add_task(text, tag)
         if success:
-            self.task_field.value = ""
+            self.task_control.value = ""
+            self.tag_dropdown.value = None
             if self.page:
                 self.page.update()
             self.refresh_tasks(self.page)
@@ -138,14 +147,7 @@ class TasksView:
                 ft.Text("No hay tareas activas", size=14, color=COLORS["text_secondary"])
             )
         else:
-            # Ordenar por timestamp (más reciente primero)
-            sorted_tasks = sorted(
-                tasks.items(),
-                key=lambda x: x[1].get("timestamp", 0),
-                reverse=True
-            )
-            
-            for task_id, task_data in sorted_tasks:
+            for task_id, task_data in tasks.items():
                 self.tasks_container.controls.append(
                     self._create_task_card(task_id, task_data)
                 )
@@ -155,50 +157,34 @@ class TasksView:
     
     def _create_task_card(self, task_id: str, task_data: Dict[str, Any]) -> ft.Container:
         """Crear tarjeta de tarea"""
-        text = task_data.get("text", "")
+        text = task_data.get("text", "Sin descripción")
         tag = task_data.get("tag", "ADMIN")
         created_by = task_data.get("created_by", "Unknown")
         
-        # Obtener info del tag
-        tag_info = ROLE_TAGS.get(tag, {"color": COLORS["text_secondary"], "label": tag})
-        
-        # Badge del tag
-        tag_badge = ft.Container(
-            content=ft.Text(
-                tag_info["label"],
-                size=11,
-                color="#000000",
-                weight=ft.FontWeight.BOLD
-            ),
-            bgcolor=tag_info["color"],
-            padding=ft.padding.symmetric(horizontal=10, vertical=5),
-            border_radius=6
-        )
-        
-        # Botón de eliminar
-        delete_button = ft.IconButton(
-            icon=ft.Icons.CLOSE,
-            icon_color=COLORS["danger"],
-            icon_size=20,
-            tooltip="Eliminar tarea",
-            on_click=lambda _, tid=task_id: self._delete_task(tid)
-        )
+        role_info = ROLE_TAGS.get(tag, {"color": COLORS["text_secondary"], "label": tag})
         
         return ft.Container(
-            content=ft.Column([
-                ft.Row([
-                    tag_badge,
-                    ft.Container(expand=True),
-                    delete_button
-                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                ft.Text(text, size=14, color=COLORS["text_primary"]),
-                ft.Text(
-                    f"Creada por: {created_by}",
-                    size=11,
-                    color=COLORS["text_secondary"],
-                    italic=True
+            content=ft.Row([
+                ft.Container(width=5, bgcolor=role_info["color"], border_radius=2),
+                ft.Column([
+                    ft.Text(text, size=14, color=COLORS["text_primary"]),
+                    ft.Row([
+                        ft.Container(
+                            content=ft.Text(role_info["label"], size=9, color="#000000", weight=ft.FontWeight.BOLD),
+                            bgcolor=role_info["color"],
+                            padding=ft.padding.symmetric(horizontal=6, vertical=2),
+                            border_radius=4
+                        ),
+                        ft.Text(f"Por: {created_by}", size=11, color=COLORS["text_secondary"]),
+                    ], spacing=10)
+                ], spacing=8, expand=True),
+                ft.IconButton(
+                    icon=ft.Icons.CHECK_CIRCLE_OUTLINE,
+                    icon_color=COLORS["success"],
+                    tooltip="Completar",
+                    on_click=lambda _, tid=task_id: self._delete_task(tid)
                 )
-            ], spacing=8),
+            ], spacing=15),
             padding=15,
             bgcolor=COLORS["card_hover"],
             border_radius=8,
@@ -206,6 +192,6 @@ class TasksView:
         )
     
     def _delete_task(self, task_id: str):
-        """Eliminar tarea"""
+        """Eliminar tarea (completar)"""
         self.firebase.delete_task(task_id)
         self.refresh_tasks(self.page)

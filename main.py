@@ -80,20 +80,19 @@ class ARKTribeManager:
     
     def _show_login(self):
         """Mostrar vista de login"""
-        self.login_view = LoginView(on_login_success=self._handle_login)
+        self.login_view = LoginView(
+            firebase_manager=self.firebase, 
+            on_login_success=self._handle_login_success
+        )
+        self.login_view.page = self.page
         self.page.controls.clear()
         self.page.add(self.login_view.build())
         self.page.update()
     
-    def _handle_login(self, email: str, password: str):
-        """Manejar intento de login"""
-        success, message = self.firebase.login(email, password)
-        
-        if success:
-            self._show_main_app()
-            self._start_background_tasks()
-        else:
-            self.login_view.show_error(message)
+    def _handle_login_success(self, email: str):
+        """Acciones tras login exitoso"""
+        self._show_main_app()
+        self._start_background_tasks()
     
     def _show_main_app(self):
         """Mostrar aplicación principal"""

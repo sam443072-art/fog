@@ -21,18 +21,12 @@ class LoginView:
         # Campo de email
         self.email_field = ft.TextField(
             label="Email",
-            # hint_text="admin@fogtribe.com", # Removed
-            width=None, # Changed from 350
-            max_width=400, # Added
-            bgcolor="#111111", # Changed from COLORS["card"]
+            bgcolor="#111111",
             border_color=COLORS["border"],
             focused_border_color=COLORS["accent"],
-            # color=COLORS["text_primary"], # Removed
-            # label_style=ft.TextStyle(color=COLORS["text_secondary"]), # Removed
             text_size=14,
-            # height=60, # Removed
-            border_radius=8, # Added
-            keyboard_type=ft.KeyboardType.EMAIL # Added
+            border_radius=8,
+            keyboard_type=ft.KeyboardType.EMAIL
         )
         
         # Campo de contraseña
@@ -40,16 +34,12 @@ class LoginView:
             label="Contraseña",
             password=True,
             can_reveal_password=True,
-            width=None, # Changed from 350
-            max_width=400, # Added
-            bgcolor="#111111", # Changed from COLORS["card"]
+            bgcolor="#111111",
             border_color=COLORS["border"],
             focused_border_color=COLORS["accent"],
-            # color=COLORS["text_primary"], # Removed
-            label_style=ft.TextStyle(color=COLORS["text_secondary"]), # Kept this line as it was in the original and not explicitly removed by the snippet, but the snippet had a syntax error. Assuming the intent was to keep it if not explicitly changed.
             text_size=14,
-            height=60, # Kept this line as it was in the original and not explicitly removed by the snippet.
-            border_radius=8, # Added
+            height=60,
+            border_radius=8,
             on_submit=lambda _: self._handle_login()
         )
         

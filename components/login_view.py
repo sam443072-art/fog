@@ -104,7 +104,6 @@ class LoginView:
             border_radius=16, # Changed from 12
             padding=40,
             width=400, # Changed from no width
-            max_width=400, # Added
             shadow=ft.BoxShadow(
                 spread_radius=1,
                 blur_radius=15,
